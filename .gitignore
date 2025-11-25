@@ -32,3 +32,9 @@ rust-toolchain.toml
 # Ignore build output directories sometimes used by other tools
 /debug/
 /release/
+
+# Ignore dotenv files in any directory (do not commit secrets)
+.env
+**/.env
+.env.*
+**/.env.*

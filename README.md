@@ -17,6 +17,7 @@ A collection of standalone Rust projects designed for learning different aspects
     - [rust-static-web-server](#rust-static-web-server)
     - [rust-simple-rest-api](#rust-simple-rest-api)
     - [rust-weather-api-client](#rust-weather-api-client)
+    - [rust-gemini-llm-client](#rust-gemini-llm-client)
     - [rust-docker-server](#rust-docker-server)
     - [rust-azure-app-service](#rust-azure-app-service)
   - [Learning Path](#learning-path)
@@ -103,6 +104,12 @@ Each project can be built and run independently from its subdirectory.
 **Dependencies**: HTTP client library like `reqwest`
 **Complexity**: Beginner to Intermediate
 
+### rust-gemini-llm-client
+**Purpose**: Interact with Large Language Models (LLMs)
+**Key Concepts**: API authentication, streaming responses, JSON handling, async/await
+**Dependencies**: `reqwest`, `tokio`, `serde`, `dotenv`
+**Complexity**: Intermediate
+
 ### rust-docker-server
 **Purpose**: Containerize a Rust application
 **Key Concepts**: Docker basics, multi-stage builds, containerization best practices
@@ -123,8 +130,9 @@ Recommended order for learning:
 2. **Then `rust-static-web-server`** - Learn networking and HTTP basics
 3. **Move to `rust-simple-rest-api`** - Understand web frameworks and API design
 4. **Try `rust-weather-api-client`** - Practice external API integration
-5. **Containerize with `rust-docker-server`** - Learn deployment basics
-6. **Deploy to cloud with `rust-azure-app-service`** - Experience cloud deployment
+5. **Build `rust-gemini-llm-client`** - Master async streams and complex API interactions
+6. **Containerize with `rust-docker-server`** - Learn deployment basics
+7. **Deploy to cloud with `rust-azure-app-service`** - Experience cloud deployment
 
 Each project builds on concepts from the previous ones, creating a progressive learning curve.
 
