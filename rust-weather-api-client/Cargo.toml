@@ -1,0 +1,23 @@
+[package]
+name = "rust-weather-api-client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# reqwest: HTTP client (like Apache HttpClient or OkHttp)
+# features = ["json"] enables automatic JSON serialization/deserialization
+reqwest = { version = "0.11", features = ["json"] }
+
+# tokio: Asynchronous runtime (like Netty or Java's ForkJoinPool but for async/await)
+# features = ["full"] enables all features including macros for main function
+tokio = { version = "1", features = ["full"] }
+
+# serde: Serialization/Deserialization framework (like Jackson annotations)
+# features = ["derive"] allows using #[derive(Serialize, Deserialize)]
+serde = { version = "1.0", features = ["derive"] }
+
+# serde_json: JSON support for Serde (like Jackson Databind)
+serde_json = "1.0"
+
+# dotenv: Loads environment variables from .env file (like dotenv-java)
+dotenv = "0.15"
