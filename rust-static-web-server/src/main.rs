@@ -25,11 +25,11 @@ use tiny_http::{Server, Response, Header};
 
 // The program entry point
 fn main() {
-    // Create an HTTP server bound to 0.0.0.0:3000 so it is reachable from other machines/containers
+    // Create an HTTP server bound to 0.0.0.0:8080 so it is reachable from other machines/containers
     // The call returns a Result; unwrap will panic if binding fails
-    let server = Server::http("0.0.0.0:3000").unwrap();
+    let server = Server::http("0.0.0.0:8080").unwrap();
     // Print a startup message to stdout
-    println!("Server started on http://0.0.0.0:3000");
+    println!("Server started on http://0.0.0.0:8080");
 
     // Iterate over incoming HTTP requests; this blocks and yields each request as it arrives
     for request in server.incoming_requests() {

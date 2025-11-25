@@ -7,7 +7,7 @@ A basic static web server implemented in Rust using the `tiny_http` crate. This 
 - Serves static files from the `static/` directory
 - Handles 404 Not Found errors
 - Basic security against directory traversal
-- Runs on port 3000
+- Runs on port 8080
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ A basic static web server implemented in Rust using the `tiny_http` crate. This 
    ```
 
 4. Open your browser and visit:
-   [http://localhost:3000](http://localhost:3000)
+   [http://localhost:8080](http://localhost:8080)
 
 ## Project Structure
 

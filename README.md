@@ -35,6 +35,7 @@ A collection of standalone Rust projects designed for learning different aspects
 - **`rust-static-web-server`**: A basic static web server that serves HTML files.
 - **`rust-simple-rest-api`**: A simple REST API server with endpoints for basic CRUD operations on a data model (e.g., a list of items).
 - **`rust-weather-api-client`**: An API integrator that fetches weather data from a public API (e.g., OpenWeatherMap).
+- **`rust-gemini-llm-client`**: A Rust client for interacting with the Gemini LLM API (auth, request/response, streaming, and JSON parsing).
 - **`rust-docker-server`**: The simple REST API server packaged as a deployable Docker image.
 - **`rust-azure-app-service`**: The simple REST API server configured for deployment to Azure App Service.
 
