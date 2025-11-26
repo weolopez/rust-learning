@@ -1,19 +1,43 @@
+// ===================================================================================
+// RUST LEARNING GUIDE FOR JAVA/JS/PYTHON DEVELOPERS
+// ===================================================================================
+// This file demonstrates a simple async HTTP client.
+// Key concepts to look for:
+// 1. Ownership & Borrowing: How Rust manages memory without a Garbage Collector.
+// 2. Option & Result: How Rust handles nulls and errors (no NullPointerException!).
+// 3. Macros: Code generation tools ending in '!' (e.g., println!, vec!).
+// ===================================================================================
+
+// IMPORTS
+// Similar to `import` in Java/Python or `import/require` in JS.
+// "Crates" are like npm packages or Maven dependencies.
 use dotenv::dotenv;
-use futures_util::StreamExt;
+use futures_util::StreamExt; // Extension trait for streams (like RxJS or Java Streams)
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::error::Error;
 
+// STRUCTS & ATTRIBUTES
+// Structs are like Classes in Java/Python but hold DATA ONLY.
+// Behavior is added separately via `impl` blocks (not shown here).
+//
+// `#[derive(...)]` is a macro attribute. It's similar to Java Annotations or Python Decorators.
+// It automatically generates code for specific "Traits" (interfaces).
+// Here, we auto-generate code to Serialize this struct to JSON.
 #[derive(Serialize)]
 struct GenerateContentRequest {
+    // `Vec<T>` is a growable array, like ArrayList<T> in Java, List in Python, or Array in JS.
+    // It owns its data (heap allocated).
     contents: Vec<Content>,
 }
 
 #[derive(Serialize)]
 struct Content {
+    // `String` is a heap-allocated, growable string (like Java's String but mutable).
+    // It is distinct from `&str` (string slice), which is just a view/pointer to string data.
     role: String,
-    parts: Vec<Part>,
+    parts: Vec<Part>, //Part is a user-defined type (typically a struct or enum) that represents a single element stored in the Vec<Part>—the data model for one "part" in your program.
 }
 
 #[derive(Serialize)]
@@ -21,14 +45,24 @@ struct Part {
     text: String,
 }
 
+// DESERIALIZATION STRUCTS
+// `#[derive(Deserialize, Debug)]`:
+// - Deserialize: Allows creating this struct from JSON.
+// - Debug: Allows printing the struct using `{:?}` (like toString() for debugging).
 #[derive(Deserialize, Debug)]
 struct GenerateContentResponse {
+    // OPTION TYPE
+    // Rust doesn't have `null`. Instead, it uses `Option<T>`.
+    // It can be `Some(value)` or `None`.
+    // This forces you to handle the "null" case explicitly, preventing NullPointerExceptions.
+    // Similar to Java's `Optional<T>`, but used everywhere.
     candidates: Option<Vec<Candidate>>,
 }
 
 #[derive(Deserialize, Debug)]
 struct Candidate {
     content: Option<ResponseContent>,
+    // Renaming fields for JSON mapping (like @JsonProperty in Jackson).
     #[serde(rename = "finishReason")]
     finish_reason: Option<String>,
 }
@@ -43,94 +77,29 @@ struct ResponsePart {
     text: Option<String>,
 }
 
-const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent";
+// CONSTANTS
+// `&str` is a "String Slice". It points to UTF-8 bytes in memory.
+// Here, it points to static memory embedded in the binary.
+const GEMINI_API_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:streamGenerateContent";
+
+// MAIN FUNCTION & ASYNC
+// `#[tokio::main]` sets up the async runtime (event loop).
+// Rust doesn't have a built-in runtime like Node.js or the JVM; you must pull one in.
+use rust_gemini_llm_client::generate_content;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    dotenv().ok();
-    println!("DEBUG: Loaded environment variables");
-
-    let api_key = env::var("GEMINI_API_KEY").expect("GEMINI_API_KEY must be set");
-    println!("DEBUG: API key loaded (length: {})", api_key.len());
-    let client = Client::new();
-    println!("DEBUG: HTTP client created");
-
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let prompt = "Explain how Rust's ownership model works in 3 sentences.";
     println!("Sending prompt: {}\n", prompt);
 
-    let request_body = GenerateContentRequest {
-        contents: vec![Content {
-            role: "user".to_string(),
-            parts: vec![Part {
-                text: prompt.to_string(),
-            }],
-        }],
-    };
-
-    let url = format!("{}?key={}", GEMINI_API_URL, api_key);
-    println!("DEBUG: Request URL: {}", url);
-
-    println!("DEBUG: Sending request...");
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await?;
-
-    println!("DEBUG: Response Status: {}", response.status());
-
-    if !response.status().is_success() {
-        println!("DEBUG: Request failed. Response body:");
-        let text = response.text().await?;
-        println!("{}", text);
-        return Ok(());
-    }
-
-    let mut stream = response.bytes_stream();
-    println!("DEBUG: Stream obtained, processing chunks...");
-
-    println!("Response:");
-    while let Some(item) = stream.next().await {
-        let chunk = item?;
-        // The API returns a stream of JSON objects, but they might be chunked arbitrarily.
-        // For simplicity in this learning project, we'll try to parse complete chunks.
-        // In a production app, you'd want a more robust JSON stream parser.
-        
-        // Note: The actual Gemini stream format is an array of JSON objects like [{}, {}, ...]
-        // Parsing the raw stream correctly requires handling the array structure.
-        // However, for this simple example, we will print the raw text chunks to demonstrate streaming.
-        
-        if let Ok(text) = String::from_utf8(chunk.to_vec()) {
-             // Clean up the response a bit for display (removing array brackets/commas if present)
-            let clean_text = text.trim_start_matches('[').trim_end_matches(']').trim_end_matches(',');
-            
-            if let Ok(response) = serde_json::from_str::<GenerateContentResponse>(clean_text) {
-                if let Some(candidates) = response.candidates {
-                    for candidate in candidates {
-                        if let Some(content) = candidate.content {
-                            if let Some(parts) = content.parts {
-                                for part in parts {
-                                    if let Some(text) = part.text {
-                                        print!("{}", text);
-                                    }
-                                }
-                            }
-                        }
-                        if let Some(reason) = candidate.finish_reason {
-                            if reason != "STOP" {
-                                println!("\nFinish reason: {}", reason);
-                            }
-                        }
-                    }
-                }
-            } else {
-                println!("DEBUG: Failed to parse chunk as GenerateContentResponse: {}", clean_text);
-            }
-        } else {
-            println!("DEBUG: Failed to decode chunk as UTF-8");
+    match generate_content(prompt, None).await {
+        Ok(resp) => {
+            println!("Response:\n{}\n", resp);
+        }
+        Err(e) => {
+            eprintln!("Error calling Gemini: {}", e);
         }
     }
-    println!("\n\nDone!");
 
     Ok(())
 }

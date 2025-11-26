@@ -33,6 +33,7 @@
             margin: 20px 0;
         }
     </style>
+    <script type="module" src="wc/genai-chat.js" defer></script>
     <script src="wc/items-manager.js" defer></script>
 </head>
 <body>
@@ -45,6 +46,11 @@
         </div>
 
         <items-manager></items-manager>
+
+        <h2>GenAI Chat</h2>
+        <div>
+            <genai-chat api-url="http://localhost:3000/prompt"></genai-chat>
+        </div>
 
         <h2>Features</h2>
         <ul>

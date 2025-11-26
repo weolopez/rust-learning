@@ -1,4 +1,3 @@
-// filepath: /Users/weo/Development/rust/hello/rust-simple-rest-api/src/main.rs
 // Top-level imports. Each import brings types/functions into scope similar to `import` in Java
 // or `require`/`import` in JS/Python, but Rust's `use` is resolved at compile time.
 use axum::{
@@ -22,6 +21,7 @@ use std::{
     // Arc (atomic reference counted pointer) and RwLock (read-write lock) for shared mutable state
     sync::{Arc, RwLock},
 };
+use rust_gemini_llm_client::generate_content;
 use tower_http::cors::{Any, CorsLayer};
 
 // Data model: a simple Item struct. `derive` automatically implements common traits.
@@ -79,6 +79,7 @@ async fn main() {
     // Build our application router and attach handlers. `.route` maps paths to handler functions.
     // `with_state(db)` clones the Arc and makes it available to handlers via the State extractor.
     let app = Router::new()
+    .route("/prompt", axum::routing::post(handle_prompt))
         .route("/items", get(list_items).post(create_item))
         .route("/items/:id", get(get_item).put(update_item).delete(delete_item))
         .layer(cors)
@@ -90,6 +91,23 @@ async fn main() {
     println!("listening on {}", listener.local_addr().unwrap());
     // Serve the application. This call is async and will run until the process exits.
     axum::serve(listener, app).await.unwrap();
+
+#[derive(Deserialize)]
+struct PromptRequest {
+    prompt: String,
+    // optional per-call API key
+    api_key: Option<String>,
+}
+
+async fn handle_prompt(Json(body): Json<PromptRequest>) -> (StatusCode, Json<serde_json::Value>) {
+    match generate_content(&body.prompt, body.api_key).await {
+        Ok(result) => (StatusCode::OK, Json(serde_json::json!({ "result": result }))),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": format!("{}", e) })),
+        ),
+    }
+}
 }
 
 // Handlers: each is an async function. Axum uses function signatures to determine how to

@@ -45,6 +45,7 @@ A simple REST API server implemented in Rust using the `axum` framework. This pr
 | GET | `/items/:id` | Get a specific item | None |
 | PUT | `/items/:id` | Update an item | `{"name": "New Name", "completed": true}` |
 | DELETE | `/items/:id` | Delete an item | None |
+| POST | `/prompt` | Generate a response based on the input prompt | `{"prompt": "Your prompt here"}` |
 
 ### Examples
 
@@ -70,6 +71,26 @@ curl -X PUT http://localhost:3000/items/1 \
 **Delete an item:**
 ```bash
 curl -X DELETE http://localhost:3000/items/1
+```
+**Generate a response:**
+```bash
+curl -X POST http://localhost:3000/prompt \
+   -H "Content-Type: application/json" \
+   -d '{"prompt": "What is the weather today?"}'
+```
+
+### Environment (.env)
+
+You can provide the Gemini API key via environment variable `GEMINI_API_KEY`. The project uses the `dotenv` crate to load a local `.env` file automatically when running with Cargo (convenience only).
+
+Create a `.env` file in the project root (do not commit it):
+```
+GEMINI_API_KEY=sk_...
+```
+
+Or create a `.env.example` with the placeholder to share with teammates:
+```
+GEMINI_API_KEY=YOUR_API_KEY_HERE
 ```
 
 ## Project Structure

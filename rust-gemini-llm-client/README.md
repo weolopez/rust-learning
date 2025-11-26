@@ -18,37 +18,56 @@ A Rust client for interacting with the Google Gemini LLM API. This project demon
 ## Getting Started
 
 1. Navigate to the project directory:
+   # rust-gemini-llm-client
+
+   A small Rust library and example CLI that calls Google Gemini Generative Language APIs (`streamGenerateContent`).
+
+   Features
+   - Async library function `generate_content(prompt: &str, api_key_opt: Option<String>) -> Result<String, Box<dyn std::error::Error + Send + Sync>>`
+   - Example binary in this crate demonstrating usage
+   - `rust-cli-echo` example app in the workspace that depends on this crate
+
+   Quick start
+
+   1) Provide your API key (recommended: environment variable)
+
    ```bash
-   cd rust-gemini-llm-client
+   # macOS / Linux
+   export GEMINI_API_KEY="sk_..."
    ```
 
-2. Create a `.env` file from the example:
-   ```bash
-   cp .env.example .env
+   2) Use the library from another Rust crate (example)
+
+   ```rust
+   // Cargo.toml: add path dependency to this crate
+   // rust-gemini-llm-client = { path = "../rust-gemini-llm-client" }
+
+   use rust_gemini_llm_client::generate_content;
+
+   #[tokio::main]
+   async fn main() {
+      let prompt = "Explain Rust ownership in 2 sentences.";
+      match generate_content(prompt, None).await {
+         Ok(resp) => println!("Response:\n{}", resp),
+         Err(e) => eprintln!("Error: {}", e),
+      }
+   }
    ```
 
-3. Open `.env` and replace `your_api_key_here` with your actual Gemini API key.
+   3) Run the example CLI (`rust-cli-echo`) in this workspace
 
-4. Build the project:
    ```bash
-   cargo build
+   # with env var
+   GEMINI_API_KEY="sk_..." cargo run -p rust-cli-echo -- "Hello from CLI"
+
+   # or pass key inline
+   cargo run --manifest-path rust-cli-echo/Cargo.toml -- -k sk_... "Hello from CLI"
    ```
 
-5. Run the client:
-   ```bash
-   cargo run
-   ```
+   Notes
+   - The library currently concatenates the text parts received from the streaming endpoint and returns a single `String`.
+   - If you need real-time token/chunk processing, I can add a streaming callback API.
+   - Uses `reqwest` + `tokio`; pass an API key per-call or rely on `GEMINI_API_KEY`.
 
-## Project Structure
-
-- `src/main.rs`: Contains the client implementation logic.
-- `Cargo.toml`: Project configuration and dependencies.
-- `.env`: Stores the API key (not committed to version control).
-
-## Dependencies
-
-- [reqwest](https://crates.io/crates/reqwest): An HTTP client for Rust.
-- [tokio](https://crates.io/crates/tokio): An asynchronous runtime for Rust.
-- [serde](https://crates.io/crates/serde): A framework for serializing and deserializing Rust data structures.
-- [serde_json](https://crates.io/crates/serde_json): A JSON serialization/deserialization library for Rust.
-- [dotenv](https://crates.io/crates/dotenv): A library for loading environment variables from a `.env` file.
+   License
+   - Copy or adapt as needed for your project.

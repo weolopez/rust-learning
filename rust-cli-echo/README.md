@@ -11,127 +11,67 @@ A simple command-line interface (CLI) program written in Rust that echoes user i
 
 ## Prerequisites
 
-- [Rust](https://rustup.rs/) (install via rustup)
+# rust-cli-echo
 
-## Installation
+A tiny CLI that forwards a prompt to the `rust-gemini-llm-client` library and prints the resulting GenAI text.
 
-1. Clone or download this repository.
-2. Navigate to the project directory:
-   ```bash
-   cd rust-cli-echo
-   ```
+Usage summary
 
-## Building
+- Provide an API key via the `GEMINI_API_KEY` environment variable, or pass `-k/--key` on the command line.
 
-Build the project in debug mode:
+Examples
+
+Run with environment variable:
 ```bash
-cargo build
+export GEMINI_API_KEY="sk_..."
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- "Explain Rust ownership in 2 sentences"
 ```
 
-Build for release (optimized):
+Run with inline key (doesn't require env var):
 ```bash
-cargo build --release
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- -k sk_... "Explain Rust ownership in 2 sentences"
 ```
 
-## Running
+If you run without a key the program will try to load `GEMINI_API_KEY` from the environment (and `.env` via `dotenv`). If no key is found it prints an error and exits.
 
-Run the program directly with Cargo:
+Development
+
+Build:
 ```bash
-cargo run -- <your message here>
+cargo build --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml
 ```
 
-Or run the compiled binary:
+Run (debug):
 ```bash
-./target/debug/rust-cli-echo <your message here>
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- "Your prompt here"
 ```
 
-For release build:
+Build (release):
 ```bash
-./target/release/rust-cli-echo <your message here>
+cargo build --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml --release
 ```
 
-## Usage
-
-### Basic Usage
-
+Run the compiled binary (debug):
 ```bash
-cargo run -- hello world
-# Output: hello world
+# binary lives at target/debug/rust-cli-echo
+GEMINI_API_KEY="sk_..." ./rust-cli-echo/target/debug/rust-cli-echo "Tell me a joke"
 ```
 
-### Multiple Words
-
+Run the compiled binary (release):
 ```bash
-cargo run -- This is a test message
-# Output: This is a test message
+# binary lives at target/release/rust-cli-echo
+GEMINI_API_KEY="sk_..." ./rust-cli-echo/target/release/rust-cli-echo "Tell me a joke"
 ```
 
-### Help
-
-Run without arguments to see usage information:
-```bash
-cargo run
-# Output:
-# Usage: target/debug/rust-cli-echo <message>
-# Example: target/debug/rust-cli-echo Hello World
-```
-
-## Examples
-
-```bash
-# Echo a simple message
-cargo run -- Hello, Rust!
-
-# Echo a sentence with multiple words
-cargo run -- Learning Rust is fun and powerful
-
-# Echo with special characters
-cargo run -- "Hello, World! 😀"
-```
-
-## Project Structure
+Project layout
 
 ```
 rust-cli-echo/
-├── src/
-│   └── main.rs          # Main application logic
-├── Cargo.toml           # Project configuration
-└── README.md            # This file
+├─ Cargo.toml        # depends on ../rust-gemini-llm-client
+└─ src/
+   └─ main.rs        # simple CLI that calls generate_content(prompt, api_key_opt)
 ```
 
-## Development
+Security note
 
-### Running Tests
-
-This project doesn't have tests yet, but you can add them in `src/main.rs` or separate test files.
-
-### Code Formatting
-
-Format the code with:
-```bash
-cargo fmt
-```
-
-### Linting
-
-Check for issues with:
-```bash
-cargo clippy
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built with [Rust](https://www.rust-lang.org/)
-- Cargo for dependency management and building
+- Do not commit API keys. Add `.env` to `.gitignore` and use environment variables or secret managers for CI.

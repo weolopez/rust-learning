@@ -11,3 +11,4 @@ serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tower-http = { version = "0.5", features = ["cors"] }
+rust-gemini-llm-client = { path = "../rust-gemini-llm-client" }
