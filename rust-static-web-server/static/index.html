@@ -50,8 +50,12 @@
 
         <h2>GenAI Chat</h2>
         <div>
-            <genai-chat api-url="http://localhost:3000/prompt"></genai-chat>
+            <genai-chat id="genai-chat"></genai-chat>
         </div>
+        <script>
+            // Set the API URL from config after page loads
+            document.getElementById('genai-chat').setAttribute('api-url', window.APP_CONFIG.promptUrl);
+        </script>
 
         <h2>Features</h2>
         <ul>

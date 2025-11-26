@@ -188,6 +188,45 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Discussions**: Join community discussions for questions and help
 - **Email**: For private inquiries or collaborations
 
+## Azure Deployment
+
+This project includes full CI/CD support for deploying to Azure Container Instances.
+
+### Quick Deploy
+
+```bash
+# Login to Azure
+az login
+
+# Deploy everything
+GEMINI_API_KEY="your-key" ./scripts/deploy-all.sh
+```
+
+### CI/CD Documentation
+
+See [docs/CICD.md](docs/CICD.md) for complete documentation on:
+- Local deployment scripts
+- GitHub Actions workflows
+- Azure infrastructure setup
+- Troubleshooting guide
+
+### Deployment Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/deploy-all.sh` | Full deployment pipeline |
+| `scripts/create-azure-resources.sh` | Create Azure RG + ACR |
+| `scripts/deploy-api-to-aci.sh` | Deploy API container |
+| `scripts/deploy-web-to-aci.sh` | Deploy Web container |
+| `scripts/cleanup-azure.sh` | Delete all resources |
+
+### Current Deployment
+
+| Service | URL |
+|---------|-----|
+| API | http://rust-api-demo.eastus.azurecontainer.io:3000 |
+| Web | http://rust-web-demo.eastus.azurecontainer.io:8080 |
+
 ## Roadmap
 
 - [ ] Add more advanced CLI projects (argument parsing libraries, interactive CLIs)
@@ -198,6 +237,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Include performance benchmarking projects
 - [ ] Add async/await examples in web projects
 - [ ] Create microservices architecture example
+- [x] Azure Container Instances deployment
+- [x] CI/CD with GitHub Actions
 
 ---
 
