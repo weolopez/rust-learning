@@ -12,8 +12,10 @@ use axum::{
     // Routing helpers (get, post, put, delete)
     routing::get,
     // JSON body extractor and Router type
-    Json, Router,
+    Json,
+    Router,
 };
+use rust_gemini_llm_client::generate_content;
 use serde::{Deserialize, Serialize};
 use std::{
     // HashMap to store items in-memory
@@ -21,7 +23,6 @@ use std::{
     // Arc (atomic reference counted pointer) and RwLock (read-write lock) for shared mutable state
     sync::{Arc, RwLock},
 };
-use rust_gemini_llm_client::generate_content;
 use tower_http::cors::{Any, CorsLayer};
 
 // Data model: a simple Item struct. `derive` automatically implements common traits.
@@ -79,9 +80,12 @@ async fn main() {
     // Build our application router and attach handlers. `.route` maps paths to handler functions.
     // `with_state(db)` clones the Arc and makes it available to handlers via the State extractor.
     let app = Router::new()
-    .route("/prompt", axum::routing::post(handle_prompt))
+        .route("/prompt", axum::routing::post(handle_prompt))
         .route("/items", get(list_items).post(create_item))
-        .route("/items/:id", get(get_item).put(update_item).delete(delete_item))
+        .route(
+            "/items/:id",
+            get(get_item).put(update_item).delete(delete_item),
+        )
         .layer(cors)
         .with_state(db);
 
@@ -93,22 +97,27 @@ async fn main() {
     // Serve the application. This call is async and will run until the process exits.
     axum::serve(listener, app).await.unwrap();
 
-#[derive(Deserialize)]
-struct PromptRequest {
-    prompt: String,
-    // optional per-call API key
-    api_key: Option<String>,
-}
-
-async fn handle_prompt(Json(body): Json<PromptRequest>) -> (StatusCode, Json<serde_json::Value>) {
-    match generate_content(&body.prompt, body.api_key).await {
-        Ok(result) => (StatusCode::OK, Json(serde_json::json!({ "result": result }))),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": format!("{}", e) })),
-        ),
+    #[derive(Deserialize)]
+    struct PromptRequest {
+        prompt: String,
+        // optional per-call API key
+        api_key: Option<String>,
     }
-}
+
+    async fn handle_prompt(
+        Json(body): Json<PromptRequest>,
+    ) -> (StatusCode, Json<serde_json::Value>) {
+        match generate_content(&body.prompt, body.api_key).await {
+            Ok(result) => (
+                StatusCode::OK,
+                Json(serde_json::json!({ "result": result })),
+            ),
+            Err(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({ "error": format!("{}", e) })),
+            ),
+        }
+    }
 }
 
 // Handlers: each is an async function. Axum uses function signatures to determine how to
@@ -128,10 +137,7 @@ async fn list_items(State(db): State<Db>) -> Json<Vec<Item>> {
 }
 
 // Create item: extract JSON body and state, obtain write lock, insert new item, return 201 Created
-async fn create_item(
-    State(db): State<Db>,
-    Json(payload): Json<CreateItem>,
-) -> impl IntoResponse {
+async fn create_item(State(db): State<Db>, Json(payload): Json<CreateItem>) -> impl IntoResponse {
     // Acquire write lock to mutate the HashMap
     let mut items = db.write().unwrap();
     // Compute a new ID: find max key and add 1. `unwrap_or(&0)` handles empty map.
@@ -147,10 +153,7 @@ async fn create_item(
 }
 
 // Get item by ID. Path extractor converts the `:id` segment into a u64.
-async fn get_item(
-    Path(id): Path<u64>,
-    State(db): State<Db>,
-) -> impl IntoResponse {
+async fn get_item(Path(id): Path<u64>, State(db): State<Db>) -> impl IntoResponse {
     let items = db.read().unwrap();
     // Use `if let Some(...)` to handle the Option returned by HashMap::get.
     if let Some(item) = items.get(&id) {
@@ -184,10 +187,7 @@ async fn update_item(
 }
 
 // Delete item. Return 204 No Content on success.
-async fn delete_item(
-    Path(id): Path<u64>,
-    State(db): State<Db>,
-) -> impl IntoResponse {
+async fn delete_item(Path(id): Path<u64>, State(db): State<Db>) -> impl IntoResponse {
     let mut items = db.write().unwrap();
     if items.remove(&id).is_some() {
         Ok(StatusCode::NO_CONTENT)
