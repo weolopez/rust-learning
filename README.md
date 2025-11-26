@@ -38,6 +38,7 @@ A collection of standalone Rust projects designed for learning different aspects
 - **`rust-weather-api-client`**: An API integrator that fetches weather data from a public API (e.g., OpenWeatherMap).
 - **`rust-gemini-llm-client`**: A Rust client for interacting with the Gemini LLM API (auth, request/response, streaming, and JSON parsing).
 - **`rust-docker-server`**: The simple REST API server packaged as a deployable Docker image.
+- **`rust-gpui-app`**: A GUI application using the GPUI framework for learning desktop UI development.
 - **`rust-azure-app-service`**: The simple REST API server configured for deployment to Azure App Service.
 
 Each project is standalone and includes:
@@ -53,6 +54,8 @@ Each project is standalone and includes:
 - **For deployment projects**:
   - Docker (for `rust-docker-server`)
   - Azure CLI (for `rust-azure-app-service`)
+- **For GUI projects**:
+  - Xcode with command line tools (for `rust-gpui-app` on macOS)
 
 All projects are designed to work on macOS, Linux, and Windows with minimal system dependencies.
 
@@ -116,6 +119,12 @@ Each project can be built and run independently from its subdirectory.
 **Dependencies**: Docker, based on `rust-simple-rest-api`
 **Complexity**: Intermediate
 
+### rust-gpui-app
+**Purpose**: Learn desktop GUI development with Rust
+**Key Concepts**: GPUI framework, UI components, rendering, event handling
+**Dependencies**: GPUI crate, requires Xcode and Metal on macOS
+**Complexity**: Intermediate
+
 ### rust-azure-app-service
 **Purpose**: Deploy Rust applications to cloud platforms
 **Key Concepts**: Azure App Service, deployment configuration, environment variables
@@ -132,7 +141,8 @@ Recommended order for learning:
 4. **Try `rust-weather-api-client`** - Practice external API integration
 5. **Build `rust-gemini-llm-client`** - Master async streams and complex API interactions
 6. **Containerize with `rust-docker-server`** - Learn deployment basics
-7. **Deploy to cloud with `rust-azure-app-service`** - Experience cloud deployment
+7. **Explore GUI with `rust-gpui-app`** - Learn desktop UI development
+8. **Deploy to cloud with `rust-azure-app-service`** - Experience cloud deployment
 
 Each project builds on concepts from the previous ones, creating a progressive learning curve.
 
