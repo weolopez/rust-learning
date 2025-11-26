@@ -13,26 +13,49 @@ A simple command-line interface (CLI) program written in Rust that echoes user i
 
 # rust-cli-echo
 
-A tiny CLI that forwards a prompt to the `rust-gemini-llm-client` library and prints the resulting GenAI text.
+A multi-purpose CLI tool that can execute Azure CLI commands or forward prompts to the `rust-gemini-llm-client` library.
 
-Usage summary
+## Usage
 
-- Provide an API key via the `GEMINI_API_KEY` environment variable, or pass `-k/--key` on the command line.
+The CLI supports two modes:
 
-Examples
+### 1. Azure CLI Mode
+Execute Azure CLI commands directly:
 
-Run with environment variable:
 ```bash
-export GEMINI_API_KEY="sk_..."
-cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- "Explain Rust ownership in 2 sentences"
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- az <command_args...>
 ```
 
-Run with inline key (doesn't require env var):
+Examples:
 ```bash
+# Create resource group
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- az group create --name rg-rust-app --location eastus
+
+# List resource groups
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- az group list --output table
+
+# Create container registry
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- az acr create --resource-group rg-rust-app --name acrrustapp --sku Basic
+```
+
+### 2. Gemini AI Mode
+Forward prompts to Gemini AI:
+
+```bash
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- [-k API_KEY] "Your prompt here"
+```
+
+Examples:
+```bash
+# With environment variable
+export GEMINI_API_KEY="sk_..."
+cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- "Explain Rust ownership in 2 sentences"
+
+# With inline key
 cargo run --manifest-path /Users/weo/Development/rust/hello/rust-cli-echo/Cargo.toml -- -k sk_... "Explain Rust ownership in 2 sentences"
 ```
 
-If you run without a key the program will try to load `GEMINI_API_KEY` from the environment (and `.env` via `dotenv`). If no key is found it prints an error and exits.
+If you run without a key, the program will try to load `GEMINI_API_KEY` from the environment (and `.env` via `dotenv`). If no key is found, it prints an error and exits.
 
 Development
 

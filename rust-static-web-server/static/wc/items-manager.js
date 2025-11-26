@@ -3,7 +3,7 @@ class ItemsManager extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this.items = [];
-        this.apiUrl = 'http://localhost:3000/items';
+        this.apiUrl = window.APP_CONFIG.apiUrl;
     }
 
     connectedCallback() {
