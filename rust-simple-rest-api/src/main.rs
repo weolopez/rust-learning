@@ -87,7 +87,8 @@ async fn main() {
 
     // Bind a TCP listener. `.await` is used because bind is async. unwrap() here will panic
     // if binding fails (e.g., port in use). Prefer handling errors explicitly in production.
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
+    // Use 0.0.0.0 to listen on all interfaces (required for Docker/container deployments)
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     // Serve the application. This call is async and will run until the process exits.
     axum::serve(listener, app).await.unwrap();
