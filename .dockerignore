@@ -1,0 +1,8 @@
+.git
+.gitignore
+**/.git
+**/.github
+**/node_modules
+**/*.rs.bk
+**/*.log
+**/dist
