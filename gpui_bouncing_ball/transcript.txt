@@ -1,0 +1,157 @@
+# tactiq.io free youtube transcript
+# No title found
+# https://www.youtube.com/watch/nXrEX6j-Mws
+
+00:00:00.000 No text
+00:00:00.160 I have one week to learn everything I can about physics simulations in games,
+00:00:03.920 by coding my own engine from scratch.
+00:00:06.646 Physics engines are the core to games like World of Goo, Unravel, The Floor is Jelly, Line Rider,
+00:00:12.550 and a casual game that I play literally every day: Skate or Don't.
+00:00:16.939 So in this video, I will attempt 10 stages of difficulty,
+00:00:20.113 using just simple intuition and one easy math concept.
+00:00:23.920 The goal: to recreate my favorite game in my brand new, home-made physics engine.
+00:00:31.000 No text
+00:00:32.400 So the foundation of everything I'm going to do starts here, at Level 1.
+00:00:36.912 I just have to make a bouncing ball. I've done this a million times, so we'll fly through this one.
+00:00:41.920 It starts with a circle. And it has a position, a size, and of course, a speed.
+00:00:47.744 To simulate the circle moving, we just add the speed to its position every frame.
+00:00:52.640 And then when we run that at, like 60 frames per second, and now we've got movement!
+00:00:57.840 We'll make it bounce off the sides of the screen before inventing gravity.
+00:01:01.984 So for the ground, you'd think the best way to do this would be to say if the circle's y position is
+00:01:08.021 below the ground minus the radius of the ball... then just reverse its y speed. Right?
+00:01:14.160 You'd think so! But if I place things just right, it does this. Why?
+00:01:21.134 Because numbers in computers are not precise, and in this very specific case,
+00:01:25.900 if you add 4.1 to the position here, and then subtract 4.1 on the way back up,
+00:01:30.758 a tiny precision error causes the circle to still be underground, and it just keeps reversing its speed forever.
+00:01:38.160 Not what we want.
+00:01:39.861 I'm mentioning this because in Infinite Bounce, one of my first games I made when I was 12,
+00:01:45.360 I used this exact same logic, and I was always so confused why this happened on some levels.
+00:01:50.960 The circle would sometimes just stick to a wall out of no where. Well now I know!
+00:01:56.240 But this will happen even more when we add gravity and friction, so we do need to fix this issue now.
+00:02:02.080 We'll just only detect the collision if the circle is moving towards the ground.
+00:02:06.693 We can also force the circle to be above the ground when it collides. And that should fix the issue.
+00:02:12.000 No text
+00:02:12.320 When I made Infinite Bounce, I had no idea how to add angled walls.
+00:02:16.651 But that's because I didn't know about the most overpowered formula in  physics simulations: dot products.
+00:02:23.616 Oh how I love dot products!
+00:02:25.729 In games, this simple formula helps calculate collisions, make shadows, shade objects, create reflections.
+00:02:33.227 It's used everywhere. Because just look at it, it's so simple:
+00:02:36.480 "x1 times x2 plus y1 times y2." That's it!
+00:02:41.173 This is how I visualize a dot product:
+00:02:43.285 First I imagine an arrow placed in the center of space, pointing in some direction.
+00:02:48.571 It always has a length of 1. Then, I imagine a second point in space.
+00:02:53.184 And what the dot product tells me is, how far in the direction of the arrow is this point?
+00:02:59.114 Like, if the arrow is pointing straight up, it tells me how high up the point is.
+00:03:03.980 If the arrow is pointing to the side, the dot product tells me how far in that direction the point is.
+00:03:10.352 So if we placed this arrow pointing away from the ground...
+00:03:13.344 suddenly we know exactly how far away  our point is from the ground, no matter what angle it's at, thanks to dot products.
+00:03:20.870 And this arrow is called the ground's "normal" vector.
+00:03:24.800 So now we can detect when the circle is close enough to the ground to collide, using a dot product.
+00:03:30.277 To make it bounce in the right direction, we just need to look at how much of the circle's speed is going in the normal direction,
+00:03:37.030 and how much of it is sliding along the ground.
+00:03:39.611 Hey look, more dot products!
+00:03:42.319 Ok we just reverse the part going in the normal direction, and do nothing with the part going in the sliding direction.
+00:03:49.723 Or, well, we can reduce it a little bit due to friction.
+00:03:53.472 Then we just throw in a little gravity  to the vertical speed,
+00:03:56.757 and reduce the bounce speed by some percentage so it loses energy over time.
+00:04:01.792 We'll call this restitution because we're fancy like that.
+00:04:05.834 A high restitution is like a bouncy ball, it keeps almost all of its energy.
+00:04:11.733 And low restitution is like a hacky sack, where it loses everything to sound and heat.
+00:04:18.128 Perfect collisions with angled walls! Take that, 12-year-old me.
+00:04:22.752 And 13-year-old me, who tried again, but gave up and turned the broken physics into a sponge.
+00:04:29.574 This was my screensaver era. This sponge is a screensaver!
+00:04:34.880 Alright, but what about bouncing off of corners?
+00:04:35.000 No text
+00:04:38.493 I mean this is the last piece needed for a circle to bounce off of any shape.
+00:04:42.694 And my approach is to split each shape into individual line segments,
+00:04:46.720 and then split each line segment into three sections.
+00:04:50.192 The middle part can be handled just like we did in Level 2.
+00:04:53.553 And the trick with the end pieces, is that the normal direction is literally just pointing in the direction of our circle.
+00:05:00.342 All we have to do is detect which piece of the line segment the circle's in.
+00:05:04.288 In other words, its distance along the line.
+00:05:07.611 In other other words, we take the dot product!
+00:05:11.068 If the dot product is negative, we're on one end. And if it's between 0 and the length of the line, it's in the middle part.
+00:05:18.342 And if the dot product is bigger than the length of the line, we're on the other end.
+00:05:22.568 Now we can have any shape we want. And it works way better than my attempt when I was 16-years-old,
+00:05:28.096 which moves the ball in the normal direction, rather than correctly bouncing across it.
+00:05:33.755 Look, I didn't know about dot products back then,
+00:05:36.080 how could I have possibly conquered level 3 physics without that knowledge?
+00:05:37.000 No text
+00:05:40.320 Circles still aren't colliding with each other.
+00:05:42.837 When circles collide, the first thing we'll notice is that their normal direction is just the distance between them.
+00:05:48.507 That's pretty simple!
+00:05:49.835 Using our normal direction and sliding direction,
+00:05:52.407 we can get how much of the speed goes into the bouncing, and how much goes into the friction.
+00:05:57.702 Instead of the circle reflecting its own speed though, we need to consider the relative speeds between the two circles.
+00:06:04.491 Think about it, if a circle is not moving, but it gets hit by another one coming in really fast,
+00:06:10.000 if we subtract the relative speed between them, the fast circle stops, and the stationary circle takes all the speed.
+00:06:17.317 Just like real life.
+00:06:19.464 This is called an elastic collision.
+00:06:22.165 Some collisions are less elastic, and instead of bouncing, they'll kind of stick to each other more.
+00:06:28.080 They both end up with the average speed of the two.
+00:06:31.360 So we can implement both of these collision types, and then have restitution be the slider between the two.
+00:06:38.144 And this code all reduces down nicely, if you prefer that.
+00:06:42.640 We should now have circle collisions!
+00:06:47.362 If you look really closely, you can see that they're squishing together weirdly.
+00:06:51.158 We can fix that. Instead of running the simulation at 60 FPS,
+00:06:55.440 we'll just run it like literally 20 times faster. And there we go, way more stable.
+00:07:01.000 No text
+00:07:01.680 When we can connect two circles with a spring, suddenly that unlocks objects and structures,
+00:07:07.680 ropes and cloth simulations, and way more. And it's surprisingly super easy.
+00:07:13.440 I have a new spring class that takes in two circles and a target length.
+00:07:17.908 Every step of the simulation, we just propel the objects closer to that target length.
+00:07:22.634 I got the best results by not just using the circle's position for this, but their predicted position 10 steps ahead.
+00:07:29.920 This helps prevent the spring from overshooting and vibrating out of control.
+00:07:34.176 There's probably a better way to adjust that, but this works fine for me at least! Game dev is an art, after all.
+00:07:39.920 We can now connect circles with springs to create ropes, and it all just kind of works.
+00:07:45.291 It's how I made the tree animations in my PowerPoint video.
+00:07:49.013 And in a way, how I created wetclap.com, except that's only in 1 dimensional, not 2D.
+00:07:57.487 And in the intro music of this video, I used a new plugin called Anukari,
+00:08:02.262 which runs a spring simulation to create sounds! It's so cool.
+00:08:07.000 No text
+00:08:09.520 If you add structural support beams inside of the object, instead of it being like a cloth, it becomes a soft body.
+00:08:17.451 There's really nothing new to code here. We can just model a cool looking shape and let it loose in zero-gravity to see it bounce around.
+00:08:24.720 Basically, our physics simulation is at the point where it can do a lot of fun stuff just by us tweaking values and combining elements in creative ways.
+00:08:34.559 One creative thing we can do is to make new points grow between existing links.
+00:08:35.000 No text
+00:08:40.272 This is called differential growth. And it can create really organic-looking structures.
+00:08:45.963 Here are some things I made using differential growth in the past.
+00:08:50.467 I'm not sure if any games actually use this specific concept, but hey. If no one else will, maybe I should!
+00:08:57.000 No text
+00:08:57.840 Now, I want to tackle something I've never succeeded at before: rigidbody collision.
+00:09:04.454 The last time I tried, it looked like this. I gave up really quickly.
+00:09:09.840 Since then, I've often heard of an algorithm called Separating Axis Theorem,
+00:09:14.293 which can detect collisions between convex shapes. Meaning: shapes that don't have indents.
+00:09:20.560 The idea is: for every side of the two objects, you cast their shadows onto its normal direction, using dot products.
+00:09:28.544 If you can find a side where the shadows don't overlap, then the objects aren't colliding.
+00:09:33.664 But if you can't find one, then the side where the objects are overlapping the least, that's generally the side where the collision's happening.
+00:09:42.480 Then to find the exact point where they're colliding... well, I actually had a hard time with this,
+00:09:47.845 so for now I just pick the closest point that both shapes share. Using a dot product!
+00:09:54.240 What followed were hours, and hours, and days of debugging,
+00:09:58.144 flipping random signs, realizing I implemented collision detection wrong,
+00:10:02.080 and generally getting so confused about what in the world was happening with these poor shapes.
+00:10:08.080 And finally, I ended up with, well a half-baked solution that is still wrong.
+00:10:13.760 But hey, way better than my last attempt. So take that, 19-year-old me!
+00:10:18.000 No text
+00:10:18.960 The good news is, I don't really need perfect rigidbodies to make an homage to my favorite game.
+00:10:25.872 In this level, I'll recreate the "Skate or Don't" player controls.
+00:10:30.437 The skater character is a set of circles connected with springs.
+00:10:35.000 We can make a simplified version of it using two connected circles as the skateboard, connecting them together to form legs,
+00:10:42.400 and then supporting the torso with invisible springs. Same thing with the head.
+00:10:48.400 The arms are really interesting, because in the original game, they can either be in the up position, or the down position.
+00:10:55.158 To replicate this, I took inspiration from compliant mechanisms, like the hinge on the ketchup bottle.
+00:11:01.152 So there's an invisible node that the hand is linked to.
+00:11:04.613 And the hand is in a stable state when it's either above or below it! Nice!
+00:11:10.240 Finally, I added controls, which affects the various spring lengths, so you can lean, crouch, and jump! Whee!
+00:11:17.984 Can you make it to the top of my obstacle course? It's frustratingly inconsistent and poorly designed.
+00:11:24.000 No text
+00:11:25.680 So in the past week, I've already made it further into physics simulation than I ever have before,
+00:11:30.560 by a lot. But I know there's so much more to explore.
+00:11:34.231 Alex Austin, the developer of Skate or Don't, has specialized in making games with physics simulations for decades.
+00:11:41.680 He made 3D human simulations and vehicle controllers, added the Magnus effect for better golf ball simulation,
+00:11:48.848 coded physics for multiplayer, and made the first bridge-building game. He's a legend!
+00:11:54.864 And yet, early on he mentioned being frustrated with rotations on rigidbodies too. We all start somewhere.
+00:12:01.600 And, while I could have just plopped in someone else's physics simulation code, like Box2D,
+00:12:07.803 y'know I wouldn't have gotten the opportunity to walk the path of one of my heroes. And I think that's pretty valuable.
+00:12:14.480 Subscribe, check out my Patreon, and I'll see you next month! Bye!
+00:12:28.795 Man do I love dot products, WOO!!!!!!!
