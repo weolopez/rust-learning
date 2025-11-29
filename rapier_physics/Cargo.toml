@@ -1,0 +1,8 @@
+[package]
+name = "rapier_physics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rapier2d = { version = "0.22", features = ["simd-stable"] }
+macroquad = "0.3"
