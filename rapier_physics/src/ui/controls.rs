@@ -28,6 +28,7 @@ impl ControlsPanel {
             .ui(&mut root_ui(), |ui| {
                 ui.label(None, &format!("FPS: {:.0}", get_fps()));
                 ui.label(None, &format!("Bodies: {}", ball_count));
+                ui.label(None, &format!("Screen: {:.0}x{:.0}", screen_width(), screen_height()));
                 ui.separator();
 
                 if ui.button(None, "Add Ball") {

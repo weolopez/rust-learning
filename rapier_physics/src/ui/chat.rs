@@ -114,6 +114,7 @@ impl ChatPanel {
 
         widgets::Window::new(hash!(), vec2(chat_x, 10.0), vec2(chat_width, chat_height))
             .label("Chat")
+            .movable(false)
             .ui(&mut root_ui(), |ui| {
                 // Username input
                 ui.label(None, "Your name:");
