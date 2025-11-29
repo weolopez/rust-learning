@@ -111,10 +111,11 @@ impl ChatPanel {
         let chat_width = 320.0;
         let chat_height = 400.0;
         let chat_x = screen_width() - chat_width - 10.0;
+        println!("DEBUG: screen_width() = {}", screen_width());
 
         widgets::Window::new(hash!(), vec2(chat_x, 10.0), vec2(chat_width, chat_height))
             .label("Chat")
-            .movable(false)
+            .movable(true)
             .ui(&mut root_ui(), |ui| {
                 // Username input
                 ui.label(None, "Your name:");
