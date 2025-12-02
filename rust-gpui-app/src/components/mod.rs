@@ -26,6 +26,7 @@
 pub mod button;
 pub mod card;
 pub mod chat;
+pub mod chat_input;
 pub mod color_swatch;
 pub mod text_input;
 
@@ -33,5 +34,6 @@ pub mod text_input;
 pub use button::{button, button_outline, button_secondary, button_small};
 pub use card::{card, card_centered, card_full, card_sized};
 pub use chat::ChatView;
+pub use chat_input::{ChatInput, ChatInputEvent};
 pub use color_swatch::{color_swatch, color_swatch_row, color_swatch_sized};
 pub use text_input::TextInput;

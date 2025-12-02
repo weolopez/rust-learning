@@ -1,98 +1,130 @@
-//! Chat component for interacting with LLM models.
+//! Chat component for displaying and managing a chat interface.
 //!
-//! This component provides a chat interface for LLM conversations
-//! with text input and message display.
+//! This module provides a ChatView component that displays a list of messages
+//! and handles user interactions using the ChatInput component.
 
 use gpui::{
     prelude::*,
     div, IntoElement, ParentElement, SharedString, Styled, Window,
-    px, rgb, Entity, MouseButton,
+    Entity,
+    px, rgb,
 };
-use crate::state::{ChatMessage, MessageRole};
 use crate::theme::colors;
-use super::text_input::TextInput;
-use chrono::Utc;
+use super::chat_input::{ChatInput, ChatInputEvent};
 
-/// A chat component with text input
+/// A single chat message
+#[derive(Clone)]
+pub struct ChatMessage {
+    /// The message content
+    pub content: SharedString,
+    /// Whether this message is from the user
+    pub is_user: bool,
+}
+
+impl ChatMessage {
+    /// Create a new user message
+    pub fn user(content: impl Into<SharedString>) -> Self {
+        Self {
+            content: content.into(),
+            is_user: true,
+        }
+    }
+
+    /// Create a new assistant message
+    pub fn assistant(content: impl Into<SharedString>) -> Self {
+        Self {
+            content: content.into(),
+            is_user: false,
+        }
+    }
+}
+
+/// A chat view component that displays messages and handles input
 pub struct ChatView {
-    /// Chat messages
+    /// The list of messages
     messages: Vec<ChatMessage>,
-    /// Text input entity
-    text_input: Entity<TextInput>,
-    /// Next message ID
-    next_id: u64,
+    /// Chat input component entity
+    chat_input: Entity<ChatInput>,
 }
 
 impl ChatView {
     /// Create a new chat view
     pub fn new(cx: &mut Context<Self>) -> Self {
-        let text_input = cx.new(|cx| TextInput::new(cx, "Type a message..."));
+        let chat_input = cx.new(|cx| ChatInput::new(cx));
+        
+        // Subscribe to chat input events
+        cx.subscribe(&chat_input, |this, _emitter, event: &ChatInputEvent, cx| {
+            match event {
+                ChatInputEvent::SendMessage(text) => {
+                    this.handle_send_message(text.clone(), cx);
+                }
+            }
+        }).detach();
+        
         Self {
-            messages: Vec::new(),
-            text_input,
-            next_id: 1,
+            messages: vec![
+                ChatMessage::assistant("Hello! How can I help you today?"),
+            ],
+            chat_input,
         }
     }
 
-    /// Send the current message
-    fn send_message(&mut self, cx: &mut Context<Self>) {
-        let text = self.text_input.read(cx).text().to_string();
+    /// Add a message to the chat
+    pub fn add_message(&mut self, message: ChatMessage) {
+        self.messages.push(message);
+    }
+
+    /// Handle a send message event from the chat input
+    fn handle_send_message(&mut self, text: String, cx: &mut Context<Self>) {
         if !text.trim().is_empty() {
-            // Add user message
-            self.messages.push(ChatMessage {
-                id: self.next_id,
-                role: MessageRole::User,
-                content: text.into(),
-                timestamp: Utc::now(),
-            });
-            self.next_id += 1;
-            
-            // Clear input
-            self.text_input.update(cx, |input, _cx| {
-                input.clear();
-            });
+            self.add_message(ChatMessage::user(text.clone()));
+            // TODO: Send to AI and get response
+            self.add_message(ChatMessage::assistant(format!("You said: {}", text)));
         }
         cx.notify();
     }
 }
 
 impl Render for ChatView {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let bg_color = colors::background();
-        let text_color = colors::text();
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let messages: Vec<_> = self.messages.iter().cloned().collect();
+        let has_messages = !messages.is_empty();
         
         div()
+            .id("chat-view")
             .flex()
             .flex_col()
-            .h_full()
-            .bg(bg_color)
+            .size_full()
+            .bg(colors::background())
+            // Messages area
             .child(
-                // Messages area
                 div()
-                    .id("messages-area")
+                    .id("messages-container")
+                    .flex()
+                    .flex_col()
                     .flex_grow()
+                    .overflow_y_scroll()
                     .p_4()
-                    .children(
-                        self.messages.iter().map(|msg| {
-                            let is_user = msg.role == MessageRole::User;
-                            div()
-                                .mb_4()
-                                .flex()
-                                .flex_col()
-                                .when(is_user, |d| d.items_end())
-                                .child(
-                                    div()
-                                        .px_3()
-                                        .py_2()
-                                        .rounded_lg()
-                                        .bg(if is_user { colors::primary() } else { colors::surface() })
-                                        .text_color(text_color)
-                                        .max_w(px(600.0))
-                                        .child(msg.content.clone())
-                                )
-                        })
-                    )
-                    .when(self.messages.is_empty(), |d| {
+                    .gap_2()
+                    .children(messages.into_iter().enumerate().map(|(i, msg)| {
+                        div()
+                            .id(i)
+                            .p_3()
+                            .rounded_lg()
+                            .max_w(px(500.0))
+                            .when(msg.is_user, |d| {
+                                d.ml_auto()
+                                    .bg(colors::primary())
+                                    .text_color(rgb(0xffffff))
+                            })
+                            .when(!msg.is_user, |d| {
+                                d.mr_auto()
+                                    .bg(colors::surface())
+                                    .text_color(colors::text())
+                            })
+                            .child(msg.content.clone())
+                    }))
+                    .when(!has_messages, |d| {
                         d.child(
                             div()
                                 .flex()
@@ -104,30 +136,7 @@ impl Render for ChatView {
                         )
                     })
             )
-            .child(
-                // Input area
-                div()
-                    .flex()
-                    .items_end()
-                    .gap_2()
-                    .p_4()
-                    .border_t_1()
-                    .border_color(colors::border())
-                    .child(self.text_input.clone())
-                    .child(
-                        div()
-                            .id("send-button")
-                            .px_4()
-                            .py_2()
-                            .bg(colors::primary())
-                            .rounded_lg()
-                            .text_color(rgb(0xffffff))
-                            .cursor_pointer()
-                            .on_mouse_down(MouseButton::Left, cx.listener(|this, _event, _window, cx| {
-                                this.send_message(cx);
-                            }))
-                            .child("Send")
-                    )
-            )
+            // Chat input area (handles its own send button)
+            .child(self.chat_input.clone())
     }
 }
