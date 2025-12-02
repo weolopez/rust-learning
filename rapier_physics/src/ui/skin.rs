@@ -25,8 +25,9 @@ pub fn create_custom_skin() -> Skin {
     let editbox_style = root_ui()
         .style_builder()
         .font_size(16)
-        .color(BLACK)
-        // Optional: Add hover/selected-hover for smoother feel
+        .color(WHITE)  // background when not focused
+        .color_clicked(WHITE)  // background when focused
+        .text_color(BLACK)
         .build();
 
     let window_style = root_ui()
