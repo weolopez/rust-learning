@@ -8,7 +8,7 @@ use macroquad::ui::root_ui;
 use crate::constants::screen_to_world;
 use crate::physics::{PhysicsWorld, BallManager};
 use crate::rendering::SceneRenderer;
-use crate::ui::{ChatPanel, ChatCommand, ControlsPanel, create_custom_skin};
+use crate::ui::{ChatPanel, ChatCommand, ControlsPanel, HasBounds, create_custom_skin};
 
 /// Main application state
 pub struct App {
@@ -18,6 +18,8 @@ pub struct App {
     pub balls: BallManager,
     /// Chat UI panel
     pub chat: ChatPanel,
+    /// Controls UI panel
+    pub controls: ControlsPanel,
 }
 
 impl App {
@@ -36,6 +38,7 @@ impl App {
             physics,
             balls,
             chat: ChatPanel::new(),
+            controls: ControlsPanel::new(),
         }
     }
 
@@ -60,8 +63,8 @@ impl App {
 
     /// Render UI and handle UI interactions
     pub fn render_ui(&mut self) {
-        // Render controls panel
-        let controls_result = ControlsPanel::render(
+        // Render controls panel (note: render needs &mut self to track window position)
+        let controls_result = self.controls.render(
             self.balls.count(),
             self.chat.visible,
         );
@@ -105,9 +108,15 @@ impl App {
         if is_mouse_button_pressed(MouseButton::Left) {
             let (mx, my) = mouse_position();
 
+            // DEBUG: Log mouse position
+            println!("DEBUG: Mouse clicked at ({}, {})", mx, my);
+
             // Check if click is outside UI areas
-            let in_controls = ControlsPanel::contains_point(mx, my);
+            let in_controls = self.controls.contains_point(mx, my);
             let in_chat = self.chat.contains_point(mx, my);
+
+            // DEBUG: Log results
+            println!("DEBUG: in_controls={}, in_chat={}", in_controls, in_chat);
 
             if !in_controls && !in_chat {
                 // Convert screen to world coordinates and add ball

@@ -1,9 +1,10 @@
 //! Chat panel UI component
-//! 
+//!
 //! Provides a chat interface with message display and command handling.
 
 use macroquad::prelude::*;
 use macroquad::ui::{hash, root_ui, widgets};
+use super::{Bounds, HasBounds};
 
 /// A single chat message
 #[derive(Clone)]
@@ -49,9 +50,19 @@ pub struct ChatPanel {
     pub input_text: String,
     pub username: String,
     pub visible: bool,
+    /// The current position of the window (macroquad mutates this when dragged!)
+    pub window_pos: Vec2,
+    /// Flag to track if window has been initialized with screen-relative position
+    initialized: bool,
 }
 
 impl ChatPanel {
+    /// Panel size constants
+    pub const WIDTH: f32 = 320.0;
+    pub const HEIGHT: f32 = 400.0;
+    /// Extra margin for window borders
+    pub const MARGIN: f32 = 10.0;
+
     pub fn new() -> Self {
         Self {
             messages: vec![ChatMessage::system(
@@ -61,6 +72,17 @@ impl ChatPanel {
             input_text: String::new(),
             username: String::from("User"),
             visible: true,
+            // Initial position will be set on first render based on screen size
+            window_pos: vec2(0.0, 10.0),
+            initialized: false,
+        }
+    }
+
+    /// Initialize window position based on screen size (called on first render)
+    fn init_position(&mut self) {
+        if !self.initialized {
+            self.window_pos.x = screen_width() - Self::WIDTH - Self::MARGIN;
+            self.initialized = true;
         }
     }
 
@@ -108,12 +130,11 @@ impl ChatPanel {
             return result;
         }
 
-        let chat_width = 320.0;
-        let chat_height = 400.0;
-        let chat_x = screen_width() - chat_width - 10.0;
-        println!("DEBUG: screen_width() = {}", screen_width());
+        // Initialize position on first render (needs screen size)
+        self.init_position();
 
-        widgets::Window::new(hash!(), vec2(chat_x, 10.0), vec2(chat_width, chat_height))
+        // IMPORTANT: Pass window_pos directly - macroquad will mutate it when dragged!
+        widgets::Window::new(hash!(), self.window_pos, vec2(Self::WIDTH, Self::HEIGHT))
             .label("Chat")
             .movable(true)
             .ui(&mut root_ui(), |ui| {
@@ -123,7 +144,7 @@ impl ChatPanel {
                 ui.separator();
 
                 // Chat messages area
-                widgets::Group::new(hash!(), vec2(chat_width - 20.0, chat_height - 150.0))
+                widgets::Group::new(hash!(), vec2(Self::WIDTH - 20.0, Self::HEIGHT - 150.0))
                     .ui(ui, |ui| {
                         // Show last 15 messages
                         let start = if self.messages.len() > 15 {
@@ -192,12 +213,28 @@ impl ChatPanel {
         result
     }
 
-    /// Check if a screen position is within the chat panel area
-    pub fn contains_point(&self, x: f32, y: f32) -> bool {
+}
+
+/// Implementing HasBounds gives us contains_point() for free via the default implementation.
+///
+/// The only thing we need to provide is the `bounds()` method - the trait handles
+/// the rest! This is a great example of Rust's "composition over inheritance" approach.
+///
+/// Note: window_pos is automatically updated by macroquad when the user drags the window,
+/// so our bounds will always reflect the current position!
+impl HasBounds for ChatPanel {
+    fn bounds(&self) -> Bounds {
+        // If not visible, return zero-size bounds so contains_point returns false
         if !self.visible {
-            return false;
+            return Bounds::default();
         }
-        x > screen_width() - 340.0 && y < 420.0
+        // Build bounds from the current window position (which macroquad updates when dragged)
+        Bounds::new(
+            self.window_pos.x,
+            self.window_pos.y,
+            Self::WIDTH + Self::MARGIN,
+            Self::HEIGHT + Self::MARGIN,
+        )
     }
 }
 

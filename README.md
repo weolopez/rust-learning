@@ -252,4 +252,5 @@ See [docs/CICD.md](docs/CICD.md) for complete documentation on:
 
 ---
 
+cargo watch -x run
 Happy learning Rust! 🚀
