@@ -1,95 +1,89 @@
 //! Chat component for displaying and managing a chat interface.
 //!
-//! This module provides a ChatView component that displays a list of messages
-//! and handles user interactions using the ChatInput component.
+//! This module provides a ChatView component that orchestrates
+//! the MessagesArea, ChatInput, and GeminiService components.
 
 use gpui::{
     prelude::*,
-    div, IntoElement, ParentElement, SharedString, Styled, Window,
+    div, IntoElement, ParentElement, Styled, Window,
     Entity,
-    px, rgb,
 };
 use crate::theme::colors;
 use super::chat_input::{ChatInput, ChatInputEvent};
+use super::messages_area::{MessagesArea, MessageEvent};
+use crate::services::gemini_service::{GeminiService, GeminiServiceEvent};
 
-/// A single chat message
-#[derive(Clone)]
-pub struct ChatMessage {
-    /// The message content
-    pub content: SharedString,
-    /// Whether this message is from the user
-    pub is_user: bool,
-}
-
-impl ChatMessage {
-    /// Create a new user message
-    pub fn user(content: impl Into<SharedString>) -> Self {
-        Self {
-            content: content.into(),
-            is_user: true,
-        }
-    }
-
-    /// Create a new assistant message
-    pub fn assistant(content: impl Into<SharedString>) -> Self {
-        Self {
-            content: content.into(),
-            is_user: false,
-        }
-    }
-}
-
-/// A chat view component that displays messages and handles input
+/// A chat view component that orchestrates messages, input, and AI service
 pub struct ChatView {
-    /// The list of messages
-    messages: Vec<ChatMessage>,
-    /// Chat input component entity
+    /// Messages area component
+    messages_area: Entity<MessagesArea>,
+    /// Chat input component
     chat_input: Entity<ChatInput>,
+    /// Gemini service for AI responses
+    gemini_service: Entity<GeminiService>,
 }
 
 impl ChatView {
     /// Create a new chat view
     pub fn new(cx: &mut Context<Self>) -> Self {
+        let messages_area = cx.new(|cx| MessagesArea::new(cx));
         let chat_input = cx.new(|cx| ChatInput::new(cx));
+        let gemini_service = cx.new(|cx| GeminiService::new(cx));
         
-        // Subscribe to chat input events
-        cx.subscribe(&chat_input, |this, _emitter, event: &ChatInputEvent, cx| {
+        // Subscribe to chat input events - forward to both messages area and gemini service
+        let messages_area_clone = messages_area.clone();
+        let gemini_service_clone = gemini_service.clone();
+        cx.subscribe(&chat_input, move |_this, _emitter, event: &ChatInputEvent, cx| {
             match event {
                 ChatInputEvent::SendMessage(text) => {
-                    this.handle_send_message(text.clone(), cx);
+                    // Add user message to messages area
+                    messages_area_clone.update(cx, |area, cx| {
+                        area.add_message(super::messages_area::ChatMessage::user(text.clone()));
+                        cx.notify();
+                    });
+                    
+                    // Send to gemini service for processing
+                    gemini_service_clone.update(cx, |service, cx| {
+                        service.handle_chat_input(event, cx);
+                    });
+                }
+            }
+        }).detach();
+        
+        // Subscribe to gemini service events - forward assistant messages to messages area
+        let messages_area_clone2 = messages_area.clone();
+        cx.subscribe(&gemini_service, move |_this, _emitter, event: &GeminiServiceEvent, cx| {
+            match event {
+                GeminiServiceEvent::AssistantMessage(text) => {
+                    messages_area_clone2.update(cx, |area, cx| {
+                        area.add_message(super::messages_area::ChatMessage::assistant(text.clone()));
+                        cx.notify();
+                    });
+                }
+                GeminiServiceEvent::Error(error) => {
+                    messages_area_clone2.update(cx, |area, cx| {
+                        area.add_message(super::messages_area::ChatMessage::assistant(
+                            format!("Error: {}", error)
+                        ));
+                        cx.notify();
+                    });
+                }
+                GeminiServiceEvent::Processing => {
+                    // Could show a loading indicator
                 }
             }
         }).detach();
         
         Self {
-            messages: vec![
-                ChatMessage::assistant("Hello! How can I help you today?"),
-            ],
+            messages_area,
             chat_input,
+            gemini_service,
         }
-    }
-
-    /// Add a message to the chat
-    pub fn add_message(&mut self, message: ChatMessage) {
-        self.messages.push(message);
-    }
-
-    /// Handle a send message event from the chat input
-    fn handle_send_message(&mut self, text: String, cx: &mut Context<Self>) {
-        if !text.trim().is_empty() {
-            self.add_message(ChatMessage::user(text.clone()));
-            // TODO: Send to AI and get response
-            self.add_message(ChatMessage::assistant(format!("You said: {}", text)));
-        }
-        cx.notify();
     }
 }
 
 impl Render for ChatView {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        let messages: Vec<_> = self.messages.iter().cloned().collect();
-        let has_messages = !messages.is_empty();
-        
         div()
             .id("chat-view")
             .flex()
@@ -97,46 +91,8 @@ impl Render for ChatView {
             .size_full()
             .bg(colors::background())
             // Messages area
-            .child(
-                div()
-                    .id("messages-container")
-                    .flex()
-                    .flex_col()
-                    .flex_grow()
-                    .overflow_y_scroll()
-                    .p_4()
-                    .gap_2()
-                    .children(messages.into_iter().enumerate().map(|(i, msg)| {
-                        div()
-                            .id(i)
-                            .p_3()
-                            .rounded_lg()
-                            .max_w(px(500.0))
-                            .when(msg.is_user, |d| {
-                                d.ml_auto()
-                                    .bg(colors::primary())
-                                    .text_color(rgb(0xffffff))
-                            })
-                            .when(!msg.is_user, |d| {
-                                d.mr_auto()
-                                    .bg(colors::surface())
-                                    .text_color(colors::text())
-                            })
-                            .child(msg.content.clone())
-                    }))
-                    .when(!has_messages, |d| {
-                        d.child(
-                            div()
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .h_full()
-                                .text_color(colors::text_muted())
-                                .child("No messages yet. Start a conversation!")
-                        )
-                    })
-            )
-            // Chat input area (handles its own send button)
+            .child(self.messages_area.clone())
+            // Chat input area
             .child(self.chat_input.clone())
     }
 }

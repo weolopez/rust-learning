@@ -54,6 +54,6 @@ pub mod views;
 
 // Re-export commonly used items
 pub use app::{run, run_with_config, WindowConfig};
-pub use state::AppState;
+pub use state::{AppState, ChatMessage, MessageRole};
 pub use theme::{ColorPalette, Theme};
 pub use views::HomeView;
