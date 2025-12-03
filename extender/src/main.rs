@@ -48,8 +48,36 @@ pub async fn proxy_gemini(
     req_body: web::Json<GeminiRequest>,
     client: web::Data<Client>,
     config: web::Data<ProxyConfig>,
+    req: actix_web::HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    let url = format!("{}?key={}", config.gemini_base_url, config.api_key);
+    // Prefer API key from headers, then fall back to config/env
+    let header_api_key = req
+        .headers()
+        .get("X-Gemini-API-Key")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .or_else(|| {
+            req.headers()
+                .get("Authorization")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|auth| {
+                    if let Some(stripped) = auth.strip_prefix("Bearer ") {
+                        Some(stripped.to_string())
+                    } else {
+                        None
+                    }
+                })
+        });
+
+    let api_key = header_api_key.unwrap_or_else(|| config.api_key.clone());
+
+    if api_key.is_empty() {
+        return Ok(HttpResponse::Unauthorized().json(serde_json::json!({
+            "error": "Missing API key. Provide X-Gemini-API-Key header, Authorization: Bearer <key>, or set GEMINI_API_KEY."
+        })));
+    }
+
+    let url = format!("{}?key={}", config.gemini_base_url, api_key);
 
     let response = client
         .post(&url)
@@ -96,7 +124,7 @@ async fn main() -> std::io::Result<()> {
     let config = ProxyConfig::default();
 
     HttpServer::new(move || create_app(client.clone(), config.clone()))
-        .bind("127.0.0.1:8080")?
+        .bind("127.0.0.1:8088")?
         .run()
         .await
 }
