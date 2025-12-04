@@ -88,6 +88,26 @@ impl MessagesArea {
         }
         cx.notify();
     }
+
+    /// Send a user message and fetch an AI response
+    pub fn send_message_and_get_ai_response(&mut self, user_message: String, cx: &mut Context<Self>) {
+        // Add the user message to the display
+        self.add_message(ChatMessage::user(user_message.clone()));
+        cx.notify();
+
+        // Simulate an asynchronous task to fetch the AI response
+        cx.spawn(async move |this: gpui::WeakEntity<MessagesArea>, cx| {
+            // Simulate a delay for the AI response (replace with actual API call)
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+
+            let ai_response = format!("AI Response to: {}", user_message);
+
+            // Update the MessagesArea with the AI response
+            this.update(cx, |area, _| {
+                area.add_message(ChatMessage::assistant(ai_response));
+            });
+        });
+    }
 }
 
 impl EventEmitter<MessagesAreaEvent> for MessagesArea {}

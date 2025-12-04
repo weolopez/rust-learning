@@ -236,6 +236,30 @@ div().bg(colors::background())
 2. Provide methods for state mutations
 3. Access state through GPUI's context system
 
+## AI Integration
+
+### Overview
+The application integrates AI responses using the Gemini LLM client. This allows dynamic and context-aware interactions within the chat application. The integration is designed to be asynchronous, leveraging Rust's async capabilities for efficient task management.
+
+### Key Components
+
+#### `send_message_and_get_ai_response`
+- Handles sending user messages to the Gemini LLM client.
+- Fetches and processes AI responses asynchronously.
+- Manages state updates to reflect pending and received responses.
+
+#### `pending_response` Field
+- Tracks the state of ongoing AI interactions.
+- Ensures the UI remains responsive during asynchronous operations.
+
+### Future Enhancements
+- Improve error handling for network and API failures.
+- Optimize performance for high-frequency message exchanges.
+
+### Message Item Component
+- A planned feature to enhance user interaction.
+- Will include rendering, copying, and other standard functionalities.
+
 ## Future Enhancements
 
 - **Navigation**: Add router for multi-view navigation
