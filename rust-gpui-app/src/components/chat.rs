@@ -54,26 +54,16 @@ impl ChatView {
         let messages_area_clone2 = messages_area.clone();
         cx.subscribe(&gemini_service, move |_this, _emitter, event: &GeminiServiceEvent, cx| {
             match event {
-                GeminiServiceEvent::AssistantMessage(text) => {
-                    messages_area_clone2.update(cx, |area, cx| {
-                        area.add_message(super::messages_area::ChatMessage::assistant(text.clone()));
-                        cx.notify();
-                    });
-                }
-                // Parsed assistant message (structured blocks). For now, fall back to concatenated text.
+                // GeminiServiceEvent::AssistantMessage(text) => {
+                    // messages_area_clone2.update(cx, |area, cx| {
+                    //     area.add_message(super::messages_area::ChatMessage::assistant(text.clone()));
+                    //     cx.notify();
+                    // });
+                // }
+                // Use structured blocks to render code and rich content properly
                 GeminiServiceEvent::AssistantMessageParsed(blocks) => {
-                    // Join text and code for a basic fallback until MessagesArea supports structured blocks.
-                    let combined = blocks.iter().map(|b| {
-                        match b {
-                            crate::components::message_item::ContentBlock::Text(t) => t.to_string(),
-                            crate::components::message_item::ContentBlock::Code { code, .. } => code.to_string(),
-                            crate::components::message_item::ContentBlock::Citation { number, source, .. } => format!("[{}] {}", number, source),
-                            crate::components::message_item::ContentBlock::FileDownload { filename, .. } => format!("[File: {}]", filename),
-                        }
-                    }).collect::<Vec<_>>().join("\n\n");
-
                     messages_area_clone2.update(cx, |area, cx| {
-                        area.add_message(super::messages_area::ChatMessage::assistant(combined));
+                        area.add_message(super::messages_area::ChatMessage::assistant_with_blocks(blocks.clone()));
                         cx.notify();
                     });
                 }

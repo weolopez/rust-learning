@@ -15,7 +15,7 @@ use chrono::Utc;
 #[derive(Clone, Debug)]
 pub enum GeminiServiceEvent {
     /// An assistant message was generated (raw string, legacy)
-    AssistantMessage(String),
+    // AssistantMessage(String),
     /// An assistant message parsed into structured content blocks
     AssistantMessageParsed(Vec<crate::components::message_item::ContentBlock>),
     /// An error occurred while generating a response
@@ -128,7 +128,7 @@ impl GeminiService {
                         service.conversation_history.push(assistant_message);
 
                         // Emit legacy raw string event for backwards compatibility
-                        inner_cx.emit(GeminiServiceEvent::AssistantMessage(response_text.clone()));
+                        // inner_cx.emit(GeminiServiceEvent::AssistantMessage(response_text.clone()));
 
                         // Parse assistant response into structured ContentBlocks and emit parsed event
                         let blocks = parse_assistant_response(&response_text);

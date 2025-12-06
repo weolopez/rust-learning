@@ -129,6 +129,24 @@ impl ChatMessage {
         }
     }
 
+    /// Create a new assistant message with structured content blocks
+    pub fn assistant_with_blocks(blocks: Vec<ContentBlock>) -> Self {
+        Self {
+            id: uuid::Uuid::new_v4().to_string(),
+            is_user: false,
+            blocks,
+            feedback: None,
+            model_name: "Assistant".into(),
+            timestamp: chrono::Local::now(),
+            branch_index: 1,
+            total_branches: 1,
+            is_streaming: false,
+            is_thinking: false,
+            thought_process: None,
+            error: None,
+        }
+    }
+
     /// Create an assistant message with code block
     pub fn assistant_with_code(
         intro: impl Into<String>,
@@ -376,12 +394,104 @@ impl ChatMessage {
     }
 
     fn render_text_block(&self, idx: usize, text: &SharedString) -> AnyElement {
-        // In a full implementation, this would parse and render Markdown
-        div()
+        // Minimal Markdown rendering: headings (#, ##, ###), bullet lists (- ), and inline code `code`
+        let content = text.to_string();
+        let lines: Vec<&str> = content.split('\n').collect();
+
+        let block = div()
             .id(SharedString::from(format!("text-{}", idx)))
             .mb_2()
-            .child(text.clone())
-            .into_any_element()
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap_1()
+                    .children(lines.into_iter().map(|line| {
+                        // Headings
+                        if let Some(stripped) = line.strip_prefix("### ") {
+                            return div()
+                                .text_sm()
+                                .font_weight(gpui::FontWeight::MEDIUM)
+                                .child(stripped.to_string())
+                                .into_any_element();
+                        } else if let Some(stripped) = line.strip_prefix("## ") {
+                            return div()
+                                .text_sm()
+                                .font_weight(gpui::FontWeight::MEDIUM)
+                                .child(stripped.to_string())
+                                .into_any_element();
+                        } else if let Some(stripped) = line.strip_prefix("# ") {
+                            return div()
+                                .text_lg()
+                                .font_weight(gpui::FontWeight::BOLD)
+                                .child(stripped.to_string())
+                                .into_any_element();
+                        }
+
+                        // Bulleted list
+                        if let Some(stripped) = line.strip_prefix("- ") {
+                            return div()
+                                .flex()
+                                .gap_2()
+                                .child(div().text_sm().child("•"))
+                                .child(div().text_sm().child(stripped.to_string()))
+                                .into_any_element();
+                        }
+
+                        // Inline code: split by backticks and alternate styles
+                        let mut parts: Vec<&str> = Vec::new();
+                        let mut buf = line;
+                        while let Some(start) = buf.find('`') {
+                            let (before, rest) = buf.split_at(start);
+                            parts.push(before);
+                            if let Some(end) = rest[1..].find('`') {
+                                let (code_with_tick, after) = rest.split_at(end + 2);
+                                // code_with_tick starts with ` and ends with `
+                                parts.push(code_with_tick);
+                                buf = after;
+                            } else {
+                                // unmatched backtick; push remainder and break
+                                parts.push(rest);
+                                buf = "";
+                                break;
+                            }
+                        }
+                        if !buf.is_empty() {
+                            parts.push(buf);
+                        }
+
+                        // If we have inline code parts (contain backticks), render alternating segments
+                        if parts.iter().any(|p| p.starts_with('`') && p.ends_with('`')) {
+                            let row = div().flex().flex_wrap().gap_1();
+                            let mut row = row;
+                            for p in parts {
+                                if p.starts_with('`') && p.ends_with('`') && p.len() >= 2 {
+                                    let code_text = &p[1..p.len()-1];
+                                    row = row.child(
+                                        div()
+                                            .rounded_sm()
+                                            .bg(rgb(0x1f2937))
+                                            .px_1()
+                                            .child(
+                                                div()
+                                                    .font_family("monospace")
+                                                    .text_sm()
+                                                    .child(code_text.to_string())
+                                            )
+                                    );
+                                } else if !p.is_empty() {
+                                    row = row.child(div().text_sm().child(p.to_string()));
+                                }
+                            }
+                            return row.into_any_element();
+                        }
+
+                        // Default paragraph
+                        div().text_sm().child(line.to_string()).into_any_element()
+                    }))
+            );
+
+        block.into_any_element()
     }
 
     fn render_code_block(
