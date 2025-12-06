@@ -53,3 +53,7 @@ pub fn clamp(value: f32, min: f32, max: f32) -> f32 {
 pub fn lerp(start: f32, end: f32, t: f32) -> f32 {
     start + (end - start) * t
 }
+
+// Export parser module for assistant response parsing
+pub mod parser;
+pub use parser::parse_assistant_response;

@@ -471,18 +471,59 @@ impl ChatMessage {
                     )
             )
             // Code body
-            .child(
+            .child({
+                // Render code as line-by-line rows to preserve newlines without relying on whitespace_pre
+                let lines: Vec<&str> = code_content.split('\n').collect();
+                let gutter_width = px(36.0);
+
                 div()
                     .p_3()
                     .overflow_hidden()
                     .child(
                         div()
-                            .font_family("monospace")
-                            .text_sm()
-                            .whitespace_nowrap()
-                            .child(code.clone())
+                            .flex()
+                            .flex_col()
+                            .gap_0()
+                            .child(
+                                div()
+                                    .flex()
+                                    .flex_col()
+                                    .gap_0()
+                                    .children(
+                                        (0..lines.len()).map(|i| {
+                                            let line_no = i + 1;
+                                            let line_text = SharedString::from(lines[i].to_string());
+
+                                            div()
+                                                .flex()
+                                                .items_start()
+                                                .child(
+                                                    div()
+                                                        .min_w(gutter_width)
+                                                        .pr_2()
+                                                        .bg(rgb(0x111113))
+                                                        .border_r_1()
+                                                        .border_color(rgb(0x3f3f46))
+                                                        .child(
+                                                            div()
+                                                                .font_family("monospace")
+                                                                .text_xs()
+                                                                .text_color(rgb(0x71717a))
+                                                                .child(format!("{:>2}", line_no))
+                                                        )
+                                                )
+                                                .child(
+                                                    div()
+                                                        .font_family("monospace")
+                                                        .text_sm()
+                                                        .child(line_text)
+                                                )
+                                                .into_any_element()
+                                        })
+                                    )
+                            )
                     )
-            )
+            })
             // Execution output panel
             .when(!matches!(status, ExecutionStatus::Idle), |d| {
                 let (color, text) = match status {

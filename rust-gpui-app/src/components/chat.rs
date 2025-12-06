@@ -60,6 +60,23 @@ impl ChatView {
                         cx.notify();
                     });
                 }
+                // Parsed assistant message (structured blocks). For now, fall back to concatenated text.
+                GeminiServiceEvent::AssistantMessageParsed(blocks) => {
+                    // Join text and code for a basic fallback until MessagesArea supports structured blocks.
+                    let combined = blocks.iter().map(|b| {
+                        match b {
+                            crate::components::message_item::ContentBlock::Text(t) => t.to_string(),
+                            crate::components::message_item::ContentBlock::Code { code, .. } => code.to_string(),
+                            crate::components::message_item::ContentBlock::Citation { number, source, .. } => format!("[{}] {}", number, source),
+                            crate::components::message_item::ContentBlock::FileDownload { filename, .. } => format!("[File: {}]", filename),
+                        }
+                    }).collect::<Vec<_>>().join("\n\n");
+
+                    messages_area_clone2.update(cx, |area, cx| {
+                        area.add_message(super::messages_area::ChatMessage::assistant(combined));
+                        cx.notify();
+                    });
+                }
                 GeminiServiceEvent::Error(error) => {
                     messages_area_clone2.update(cx, |area, cx| {
                         area.add_message(super::messages_area::ChatMessage::assistant(

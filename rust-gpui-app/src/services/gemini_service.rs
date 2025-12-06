@@ -8,13 +8,16 @@ use gpui::{prelude::*, EventEmitter, SharedString};
 use crate::components::chat_input::ChatInputEvent;
 use crate::services::gemini::GeminiClient;
 use crate::state::{ChatMessage, MessageRole};
+use crate::utils::parser::parse_assistant_response;
 use chrono::Utc;
 
 /// Events emitted by the Gemini service
 #[derive(Clone, Debug)]
 pub enum GeminiServiceEvent {
-    /// An assistant message was generated
+    /// An assistant message was generated (raw string, legacy)
     AssistantMessage(String),
+    /// An assistant message parsed into structured content blocks
+    AssistantMessageParsed(Vec<crate::components::message_item::ContentBlock>),
     /// An error occurred while generating a response
     Error(String),
     /// Processing started
@@ -114,7 +117,7 @@ impl GeminiService {
 
                 match result {
                     Ok(response_text) => {
-                        // Add assistant message to conversation history
+                        // Add assistant message to conversation history (raw string)
                         let assistant_message = ChatMessage {
                             id: service.next_message_id,
                             role: MessageRole::Assistant,
@@ -124,7 +127,12 @@ impl GeminiService {
                         service.next_message_id += 1;
                         service.conversation_history.push(assistant_message);
 
-                        inner_cx.emit(GeminiServiceEvent::AssistantMessage(response_text));
+                        // Emit legacy raw string event for backwards compatibility
+                        inner_cx.emit(GeminiServiceEvent::AssistantMessage(response_text.clone()));
+
+                        // Parse assistant response into structured ContentBlocks and emit parsed event
+                        let blocks = parse_assistant_response(&response_text);
+                        inner_cx.emit(GeminiServiceEvent::AssistantMessageParsed(blocks));
                     }
                     Err(e) => {
                         inner_cx.emit(GeminiServiceEvent::Error(e.to_string()));
