@@ -2,6 +2,7 @@
 //!
 //! This service subscribes to ChatInputEvent from the chat input component
 //! and emits assistant messages after querying the Gemini API.
+use dotenv::dotenv;
 
 use gpui::{prelude::*, EventEmitter, SharedString};
 use crate::components::chat_input::ChatInputEvent;
@@ -37,6 +38,7 @@ pub struct GeminiService {
 impl GeminiService {
     /// Create a new Gemini service
     pub fn new(_cx: &mut Context<Self>) -> Self {
+        dotenv().ok();
         // Try to get API key from environment
         let api_key = std::env::var("GEMINI_API_KEY").ok();
         
