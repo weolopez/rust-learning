@@ -124,7 +124,7 @@ async fn main() -> std::io::Result<()> {
     let config = ProxyConfig::default();
 
     HttpServer::new(move || create_app(client.clone(), config.clone()))
-        .bind("127.0.0.1:8088")?
+        .bind("0.0.0.0:8089")?
         .run()
         .await
 }
