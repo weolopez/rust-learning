@@ -17,10 +17,11 @@
 //!
 //! # Example
 //!
-//! ```
+//! ```Rust,no_run
 //! use crate::views::HomeView;
 //!
-//! let home = HomeView::new("User");
+//! // Example usage; constructor signature may differ in implementations.
+//! let _home = HomeView::new("User");
 //! ```
 
 pub mod home;

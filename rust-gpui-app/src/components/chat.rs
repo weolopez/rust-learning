@@ -54,9 +54,16 @@ impl ChatView {
         let messages_area_clone2 = messages_area.clone();
         cx.subscribe(&gemini_service, move |_this, _emitter, event: &GeminiServiceEvent, cx| {
             match event {
-                GeminiServiceEvent::AssistantMessage(text) => {
+                // GeminiServiceEvent::AssistantMessage(text) => {
+                    // messages_area_clone2.update(cx, |area, cx| {
+                    //     area.add_message(super::messages_area::ChatMessage::assistant(text.clone()));
+                    //     cx.notify();
+                    // });
+                // }
+                // Use structured blocks to render code and rich content properly
+                GeminiServiceEvent::AssistantMessageParsed(blocks) => {
                     messages_area_clone2.update(cx, |area, cx| {
-                        area.add_message(super::messages_area::ChatMessage::assistant(text.clone()));
+                        area.add_message(super::messages_area::ChatMessage::assistant_with_blocks(blocks.clone()));
                         cx.notify();
                     });
                 }

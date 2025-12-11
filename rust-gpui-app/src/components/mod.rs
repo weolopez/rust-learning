@@ -28,6 +28,7 @@ pub mod card;
 pub mod chat;
 pub mod chat_input;
 pub mod color_swatch;
+pub mod message_item;
 pub mod messages_area;
 pub mod text_input;
 
@@ -37,5 +38,6 @@ pub use card::{card, card_centered, card_full, card_sized};
 pub use chat::ChatView;
 pub use chat_input::{ChatInput, ChatInputEvent};
 pub use color_swatch::{color_swatch, color_swatch_row, color_swatch_sized};
-pub use messages_area::{MessagesArea, MessagesAreaEvent, MessageEvent, ChatMessage};
+pub use message_item::{ChatMessage, ContentBlock, ExecutionStatus, MessageAction};
+pub use messages_area::{MessagesArea, MessagesAreaEvent, MessageEvent};
 pub use text_input::TextInput;
