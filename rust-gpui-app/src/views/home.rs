@@ -55,11 +55,6 @@ impl Render for HomeView {
             .flex()
             .flex_col()
             .h_full()
-            // .child(
-            //     card_full()
-            //         .child(format!("Hello, {}!", &self.name))
-            //         .child(color_swatch_row(_colors))
-            // )
             .child(self.chat_view.clone())
     }
 }

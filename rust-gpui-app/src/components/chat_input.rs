@@ -30,6 +30,12 @@ impl ChatInput {
     /// Create a new chat input
     pub fn new(cx: &mut Context<Self>) -> Self {
         let text_input = cx.new(|cx| TextInput::new(cx, "Type a message..."));
+
+        // Prefill default text
+        text_input.update(cx, |input, _cx| {
+            input.set_text("Create a rust function");
+        });
+
         Self {
             text_input,
             focus_handle: cx.focus_handle(),

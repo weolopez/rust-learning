@@ -17,6 +17,8 @@ use gpui::{
     IntoElement, ParentElement, SharedString, Styled, Window,
     ClipboardItem,
 };
+use pulldown_cmark::{Event, Options, Parser, Tag};
+
 
 // Helper color functions
 fn white() -> gpui::Rgba { rgb(0xffffff).into() }
@@ -25,7 +27,7 @@ fn black() -> gpui::Rgba { rgb(0x000000).into() }
 // --- Data Structures ---
 
 /// Execution status for code blocks
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 pub enum ExecutionStatus {
     /// Code has not been executed
     Idle,
@@ -38,7 +40,7 @@ pub enum ExecutionStatus {
 }
 
 /// Content block types within a message
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize)]
 pub enum ContentBlock {
     /// Standard text (Markdown text would be parsed here)
     Text(SharedString),
@@ -394,104 +396,102 @@ impl ChatMessage {
     }
 
     fn render_text_block(&self, idx: usize, text: &SharedString) -> AnyElement {
-        // Minimal Markdown rendering: headings (#, ##, ###), bullet lists (- ), and inline code `code`
-        let content = text.to_string();
-        let lines: Vec<&str> = content.split('\n').collect();
+        // Use pulldown-cmark to properly parse and render markdown
+        let mut opts = Options::empty();
+        opts.insert(Options::ENABLE_STRIKETHROUGH);
+        opts.insert(Options::ENABLE_TASKLISTS);
 
-        let block = div()
+        let parser = Parser::new_ext(text.as_ref(), opts);
+
+        let mut elements = Vec::new();
+        let mut current_paragraph = Vec::new();
+
+        for event in parser {
+            match event {
+                Event::Start(tag) => {
+                    match tag {
+                        Tag::Paragraph => {
+                            // Start new paragraph
+                            current_paragraph = Vec::new();
+                        }
+                        Tag::Heading(_level, _, _) => {
+                            // Flush any current paragraph
+                            if !current_paragraph.is_empty() {
+                                elements.push(div().children(std::mem::take(&mut current_paragraph)).into_any_element());
+                            }
+                            // Headings are handled in the Text event below
+                            // For now, we'll handle them in the text event
+                        }
+                        Tag::Emphasis => {
+                            // Emphasis (italic) - we'll handle in Text event
+                        }
+                        Tag::Strong => {
+                            // Strong (bold) - we'll handle in Text event
+                        }
+                        Tag::Strikethrough => {
+                            // Strikethrough - we'll handle in Text event
+                        }
+                        Tag::CodeBlock(_) => {
+                            // Code blocks should be handled as separate ContentBlocks, not here
+                        }
+                        Tag::List(_) => {
+                            // Lists - we'll handle in Text event
+                        }
+                        Tag::Item => {
+                            // List items - we'll handle in Text event
+                        }
+                        _ => {}
+                    }
+                }
+                Event::End(tag) => {
+                    match tag {
+                        Tag::Paragraph => {
+                            // End paragraph
+                            if !current_paragraph.is_empty() {
+                                elements.push(div()
+                                    .mb_2()
+                                    .children(std::mem::take(&mut current_paragraph))
+                                    .into_any_element());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                Event::Text(text) => {
+                    // For now, just add as plain text
+                    // In a full implementation, you'd need to track formatting state
+                    current_paragraph.push(div().text_sm().child(text.to_string()).into_any_element());
+                }
+                Event::Code(code) => {
+                    // Inline code
+                    current_paragraph.push(div()
+                        .rounded_sm()
+                        .bg(rgb(0x1f2937))
+                        .px_1()
+                        .font_family("monospace")
+                        .text_sm()
+                        .child(code.to_string())
+                        .into_any_element());
+                }
+                Event::SoftBreak | Event::HardBreak => {
+                    current_paragraph.push(div().child(" ").into_any_element());
+                }
+                _ => {}
+            }
+        }
+
+        // Flush any remaining paragraph
+        if !current_paragraph.is_empty() {
+            elements.push(div()
+                .mb_2()
+                .children(current_paragraph)
+                .into_any_element());
+        }
+
+        div()
             .id(SharedString::from(format!("text-{}", idx)))
-            .mb_2()
-            .child(
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap_1()
-                    .children(lines.into_iter().map(|line| {
-                        // Headings
-                        if let Some(stripped) = line.strip_prefix("### ") {
-                            return div()
-                                .text_sm()
-                                .font_weight(gpui::FontWeight::MEDIUM)
-                                .child(stripped.to_string())
-                                .into_any_element();
-                        } else if let Some(stripped) = line.strip_prefix("## ") {
-                            return div()
-                                .text_sm()
-                                .font_weight(gpui::FontWeight::MEDIUM)
-                                .child(stripped.to_string())
-                                .into_any_element();
-                        } else if let Some(stripped) = line.strip_prefix("# ") {
-                            return div()
-                                .text_lg()
-                                .font_weight(gpui::FontWeight::BOLD)
-                                .child(stripped.to_string())
-                                .into_any_element();
-                        }
-
-                        // Bulleted list
-                        if let Some(stripped) = line.strip_prefix("- ") {
-                            return div()
-                                .flex()
-                                .gap_2()
-                                .child(div().text_sm().child("•"))
-                                .child(div().text_sm().child(stripped.to_string()))
-                                .into_any_element();
-                        }
-
-                        // Inline code: split by backticks and alternate styles
-                        let mut parts: Vec<&str> = Vec::new();
-                        let mut buf = line;
-                        while let Some(start) = buf.find('`') {
-                            let (before, rest) = buf.split_at(start);
-                            parts.push(before);
-                            if let Some(end) = rest[1..].find('`') {
-                                let (code_with_tick, after) = rest.split_at(end + 2);
-                                // code_with_tick starts with ` and ends with `
-                                parts.push(code_with_tick);
-                                buf = after;
-                            } else {
-                                // unmatched backtick; push remainder and break
-                                parts.push(rest);
-                                buf = "";
-                                break;
-                            }
-                        }
-                        if !buf.is_empty() {
-                            parts.push(buf);
-                        }
-
-                        // If we have inline code parts (contain backticks), render alternating segments
-                        if parts.iter().any(|p| p.starts_with('`') && p.ends_with('`')) {
-                            let row = div().flex().flex_wrap().gap_1();
-                            let mut row = row;
-                            for p in parts {
-                                if p.starts_with('`') && p.ends_with('`') && p.len() >= 2 {
-                                    let code_text = &p[1..p.len()-1];
-                                    row = row.child(
-                                        div()
-                                            .rounded_sm()
-                                            .bg(rgb(0x1f2937))
-                                            .px_1()
-                                            .child(
-                                                div()
-                                                    .font_family("monospace")
-                                                    .text_sm()
-                                                    .child(code_text.to_string())
-                                            )
-                                    );
-                                } else if !p.is_empty() {
-                                    row = row.child(div().text_sm().child(p.to_string()));
-                                }
-                            }
-                            return row.into_any_element();
-                        }
-
-                        // Default paragraph
-                        div().text_sm().child(line.to_string()).into_any_element()
-                    }))
-            );
-
-        block.into_any_element()
+            .children(elements)
+            .into_any_element()
     }
 
     fn render_code_block(

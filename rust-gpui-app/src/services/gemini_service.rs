@@ -132,6 +132,8 @@ impl GeminiService {
 
                         // Parse assistant response into structured ContentBlocks and emit parsed event
                         let blocks = parse_assistant_response(&response_text);
+                        //convert blocks to json and pretty print
+                        // print!("Parsed assistant response blocks: {}\n", serde_json::to_string_pretty(&blocks).unwrap());
                         inner_cx.emit(GeminiServiceEvent::AssistantMessageParsed(blocks));
                     }
                     Err(e) => {
@@ -143,6 +145,7 @@ impl GeminiService {
         })
         .detach();
     }
+    
 
     /// Check if the service is processing
     pub fn is_processing(&self) -> bool {

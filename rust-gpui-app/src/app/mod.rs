@@ -44,6 +44,7 @@ pub fn run() {
 
         cx.open_window(options, |_, cx| cx.new(|cx| HomeView::new(cx, "World")))
             .unwrap();
+
     });
 }
 

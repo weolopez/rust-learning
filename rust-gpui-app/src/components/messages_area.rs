@@ -52,9 +52,10 @@ pub struct MessagesArea {
 impl MessagesArea {
     /// Create a new messages area
     pub fn new(_cx: &mut Context<Self>) -> Self {
+
         Self {
             messages: vec![
-                ChatMessage::assistant("Hello! How can I help you today?"),
+                // ChatMessage::assistant("Hello! How can I help you today?"),
             ],
         }
     }
